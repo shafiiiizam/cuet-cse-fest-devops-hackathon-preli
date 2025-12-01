@@ -1,55 +1,23 @@
-version: '3.8'
+include .env
 
-services:
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3847:3847"
-    environment:
-      - PORT=3847
-      - MONGO_URI=${MONGO_URI}
-      - NODE_ENV=development
-    volumes:
-      - ../backend/src:/app/src
-    networks:
-      - dev-net
-    depends_on:
-      - mongo
+.PHONY: help build-prod up-prod down-prod logs health-check
 
-  gateway:
-    build:
-      context: ../gateway
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5921:5921"
-    environment:
-      - PORT=5921
-      - BACKEND_URL=http://backend:3847
-      - NODE_ENV=development
-    volumes:
-      - ../gateway/src:/app/src
-    networks:
-      - dev-net
-    depends_on:
-      - backend
+help:
+	@echo "Usage: make [target]"
 
-  mongo:
-    image: mongo:6.0
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-    volumes:
-      - mongo-dev-storage:/data/db
-    networks:
-      - dev-net
+build-prod:
+	docker compose -f docker/compose.production.yaml build
 
-networks:
-  dev-net:
+up-prod:
+	docker compose -f docker/compose.production.yaml up -d
 
-volumes:
-  mongo-dev-storage:
+down-prod:
+	docker compose -f docker/compose.production.yaml down
+
+logs:
+	docker compose -f docker/compose.production.yaml logs -f
+
+health-check:
+	curl http://localhost:5921/health
+	curl http://localhost:5921/api/health
 
