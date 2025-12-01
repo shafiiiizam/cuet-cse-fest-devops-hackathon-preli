@@ -1,6 +1,50 @@
-# services:
-  # backend:
+version: '3.8'
 
-  # gateway:
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3847
+      - MONGO_URI=${MONGO_URI}
+      - NODE_ENV=production
+    networks:
+      - private-net
+    depends_on:
+      - mongo
+    restart: always
 
-  # mongo:
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5921:5921"
+    environment:
+      - PORT=5921
+      - BACKEND_URL=http://backend:3847
+      - NODE_ENV=production
+    networks:
+      - private-net
+    depends_on:
+      - backend
+    restart: always
+
+  mongo:
+    image: mongo:6.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo-prod-storage:/data/db
+    networks:
+      - private-net
+    restart: always
+
+networks:
+  private-net:
+    driver: bridge
+
+volumes:
+  mongo-prod-storage:
