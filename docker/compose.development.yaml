@@ -1,6 +1,54 @@
-# services:
-  # backend:
+version: '3.8'
 
-  # gateway:
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3847:3847"
+    environment:
+      - PORT=3847
+      - MONGO_URI=${MONGO_URI}
+      - NODE_ENV=development
+    volumes:
+      - ../backend/src:/app/src
+    networks:
+      - dev-net
+    depends_on:
+      - mongo
 
-  # mongo:
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5921:5921"
+    environment:
+      - PORT=5921
+      - BACKEND_URL=http://backend:3847
+      - NODE_ENV=development
+    volumes:
+      - ../gateway/src:/app/src
+    networks:
+      - dev-net
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo-dev-storage:/data/db
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+
+volumes:
+  mongo-dev-storage:
